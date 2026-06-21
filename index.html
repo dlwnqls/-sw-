@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker - 나의 목표 관리</title>
+    <!-- 폰트: Pretendard -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+    <!-- 아이콘: Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 앱 컨테이너 (모바일 프레임) -->
+    <div class="app-container">
+        
+        <!-- 로그인 화면 -->
+        <section id="login-view" class="view active">
+            <div class="glass-card login-card">
+                <div class="logo-area">
+                    <i class="ph ph-target logo-icon"></i>
+                    <h1>Habit Tracker</h1>
+                    <p>나의 습관, 나의 성장</p>
+                </div>
+                <form id="login-form">
+                    <div class="input-group">
+                        <i class="ph ph-user"></i>
+                        <input type="text" id="nickname" placeholder="닉네임" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <i class="ph ph-lock-key"></i>
+                        <input type="password" id="password" placeholder="비밀번호" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="primary-btn">로그인 / 시작하기</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 메인 앱 화면 (로그인 후) -->
+        <section id="main-view" class="view hidden">
+            
+            <!-- 상단 헤더 -->
+            <header class="app-header">
+                <div class="user-greeting">
+                    <h2 id="greeting-text">안녕하세요, <span id="display-name">사용자</span>님 👋</h2>
+                    <div class="date-nav">
+                        <button id="prev-date-btn" class="icon-btn date-arrow"><i class="ph ph-caret-left"></i></button>
+                        <p id="current-date">오늘의 습관</p>
+                        <button id="next-date-btn" class="icon-btn date-arrow"><i class="ph ph-caret-right"></i></button>
+                        <button id="today-btn" class="today-badge hidden">오늘로 돌아가기</button>
+                    </div>
+                </div>
+                <button id="logout-btn" class="icon-btn" title="로그아웃"><i class="ph ph-sign-out"></i></button>
+            </header>
+
+            <!-- 화면 콘텐츠 전환 영역 -->
+            <main class="content-area">
+                
+                <!-- 대시보드 (오늘의 습관) -->
+                <div id="tab-dashboard" class="tab-content active">
+                    <div class="progress-summary glass-card">
+                        <div class="summary-text">
+                            <h3>오늘의 달성률</h3>
+                            <p id="today-progress-text">0 / 0 완료</p>
+                        </div>
+                        <div class="circular-progress" id="today-progress-circle" style="--progress: 0deg;">
+                            <span class="progress-value" id="today-progress-percentage">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="habit-list-container">
+                        <div class="list-header">
+                            <h3>수행할 습관</h3>
+                            <button id="add-habit-btn" class="add-btn"><i class="ph ph-plus"></i></button>
+                        </div>
+                        <ul id="habit-list" class="habit-list">
+                            <!-- JS를 통해 습관 아이템들이 여기에 추가됩니다 -->
+                            <div class="empty-state">
+                                <i class="ph ph-leaf"></i>
+                                <p>오늘 등록된 습관이 없습니다.<br>새로운 습관을 추가해보세요!</p>
+                            </div>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 통계 화면 -->
+                <div id="tab-stats" class="tab-content hidden">
+                    <h3 class="section-title">주간 통계</h3>
+                    <div class="glass-card chart-container">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+
+                    <h3 class="section-title">습관별 달성률</h3>
+                    <div class="glass-card stats-grid" id="habit-stats-grid">
+                        <!-- JS로 채워짐 -->
+                    </div>
+                </div>
+                
+            </main>
+
+            <!-- 하단 네비게이션 바 -->
+            <nav class="bottom-nav glass-nav">
+                <button class="nav-item active" data-target="tab-dashboard">
+                    <i class="ph ph-check-square"></i>
+                    <span>투데이</span>
+                </button>
+                <button class="nav-item" data-target="tab-stats">
+                    <i class="ph ph-chart-line-up"></i>
+                    <span>통계</span>
+                </button>
+            </nav>
+
+        </section>
+
+        <!-- 습관 등록 모달 -->
+        <div id="habit-modal" class="modal-overlay hidden">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h3 id="modal-title">새로운 습관 만들기</h3>
+                    <button class="close-modal-btn"><i class="ph ph-x"></i></button>
+                </div>
+                <form id="habit-form">
+                    <input type="hidden" id="edit-habit-id">
+                    <div class="form-group">
+                        <label for="habit-name">습관 이름</label>
+                        <input type="text" id="habit-name" placeholder="예: 아침 30분 달리기" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>카테고리</label>
+                        <div class="category-selector">
+                            <label class="category-option"><input type="radio" name="category" value="운동" checked><span class="badge exercise">운동</span></label>
+                            <label class="category-option"><input type="radio" name="category" value="공부"><span class="badge study">공부</span></label>
+                            <label class="category-option"><input type="radio" name="category" value="독서"><span class="badge reading">독서</span></label>
+                            <label class="category-option"><input type="radio" name="category" value="건강"><span class="badge health">건강</span></label>
+                            <label class="category-option"><input type="radio" name="category" value="기타"><span class="badge custom">기타</span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>반복 주기 (요일 선택)</label>
+                        <div class="days-selector">
+                            <label class="day-option"><input type="checkbox" name="days" value="1" checked><span>월</span></label>
+                            <label class="day-option"><input type="checkbox" name="days" value="2" checked><span>화</span></label>
+                            <label class="day-option"><input type="checkbox" name="days" value="3" checked><span>수</span></label>
+                            <label class="day-option"><input type="checkbox" name="days" value="4" checked><span>목</span></label>
+                            <label class="day-option"><input type="checkbox" name="days" value="5" checked><span>금</span></label>
+                            <label class="day-option"><input type="checkbox" name="days" value="6" checked><span>토</span></label>
+                            <label class="day-option"><input type="checkbox" name="days" value="0" checked><span>일</span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="habit-time">알림 시간 (선택)</label>
+                        <input type="time" id="habit-time">
+                    </div>
+
+                    <button type="submit" class="primary-btn" id="modal-submit-btn">습관 저장하기</button>
+                    <button type="button" class="danger-btn hidden" id="modal-delete-btn">습관 삭제하기</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 인앱 커스텀 알림 배너 -->
+        <div id="notification-banner" class="notification-banner hidden">
+            <div class="notif-icon"><i class="ph ph-bell-ringing"></i></div>
+            <div class="notif-content">
+                <h4 id="notif-title">알림 타이틀</h4>
+                <p id="notif-message">알림 메시지입니다.</p>
+            </div>
+            <button class="notif-close"><i class="ph ph-x"></i></button>
+        </div>
+
+    </div>
+
+    <!-- 외부 라이브러리: 통계 및 애니메이션 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- 앱 로직 -->
+    <script src="app.js"></script>
+</body>
+</html>
